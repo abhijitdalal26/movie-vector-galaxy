@@ -151,7 +151,7 @@ reducer = umap.UMAP(
 coords = reducer.fit_transform(emb_norm)
 coords.shape
 galaxy_df = pd.DataFrame({
-    "vector_id": np.arange(len(coords)),
+    "vector_id": meta["vector_id"],
     "x": coords[:, 0],
     "y": coords[:, 1],
     "z": coords[:, 2],

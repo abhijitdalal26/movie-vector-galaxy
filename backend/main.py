@@ -88,6 +88,19 @@ def get_galaxy_data(
         logger.error(f"Error fetching galaxy data: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@app.get("/api/galaxy/neighbors")
+def get_galaxy_neighbors(vector_id: int, radius: float = 0.3):
+    """
+    Returns all galaxy stars within `radius` UMAP units of `vector_id`.
+    Used by Explore Mode when zooming into a cluster.
+    """
+    try:
+        neighbors = data_engine.get_neighbors_by_vector_id(vector_id=vector_id, radius=radius)
+        return {"count": len(neighbors), "stars": neighbors}
+    except Exception as e:
+        logger.error(f"Error fetching neighbors for {vector_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/api/movies/{vector_id}")
 def get_movie_by_id(vector_id: int):
     movie = data_engine.get_movie_by_vector_id(vector_id)

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import { GalaxyProvider } from "@/context/GalaxyContext";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geist.variable} antialiased`}>
-        {children}
+        <GalaxyProvider>
+          {children}
+        </GalaxyProvider>
       </body>
     </html>
   );

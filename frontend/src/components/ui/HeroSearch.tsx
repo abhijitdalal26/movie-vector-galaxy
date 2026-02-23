@@ -19,7 +19,7 @@ export default function HeroSearch() {
     return (
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
 
-            {/* Branding title */}
+            {/* Branding */}
             <div className="mb-3 animate-fade-in">
                 <p className="text-xs uppercase tracking-[0.4em] text-blue-400/80 mb-3 font-medium">
                     Semantic Cinema Discovery
@@ -31,7 +31,6 @@ export default function HeroSearch() {
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
-                        textShadow: 'none',
                         filter: 'drop-shadow(0 0 40px rgba(167, 139, 250, 0.35))',
                     }}
                 >
@@ -44,11 +43,11 @@ export default function HeroSearch() {
                 </p>
             </div>
 
-            {/* Search bar */}
+            {/* Search bar — Google new tab shape, dark glass colour */}
             <form
                 onSubmit={handleSubmit}
                 className="animate-fade-in"
-                style={{ width: '100%', maxWidth: '560px', marginTop: '2rem', animationDelay: '0.3s' }}
+                style={{ width: '100%', maxWidth: '620px', marginTop: '2rem', animationDelay: '0.3s' }}
             >
                 <div
                     className="relative flex items-center transition-all duration-300"
@@ -63,17 +62,20 @@ export default function HeroSearch() {
                             ? '0 0 0 5px rgba(167, 139, 250, 0.15), 0 24px 70px rgba(0,0,0,0.5)'
                             : '0 8px 40px rgba(0,0,0,0.4)',
                         backdropFilter: 'blur(24px)',
-                        borderRadius: '9999px',
+                        borderRadius: '9999px',   // ← full pill shape
+                        minHeight: '56px',         // ← Google-style height
                     }}
                 >
+                    {/* padding-left: 10px;padding-right: 10px; */}
                     {/* Search icon */}
-                    <div className="pl-5 pr-3 text-gray-400">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <div className="pl-10 pr-10" style={{ color: '#9CA3AF', flexShrink: 0, paddingLeft: '10px', paddingRight: '10px' }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.35-4.35" />
                         </svg>
                     </div>
 
+                    {/* Input */}
                     <input
                         ref={inputRef}
                         type="text"
@@ -82,27 +84,37 @@ export default function HeroSearch() {
                         onFocus={() => setFocused(true)}
                         onBlur={() => setFocused(false)}
                         placeholder="Search a movie, vibe, feeling, or plot..."
-                        className="flex-1 bg-transparent py-5 pr-4 text-base md:text-lg text-white placeholder-gray-500 outline-none"
                         autoComplete="off"
+                        className="flex-1 bg-transparent outline-none"
+                        style={{
+                            padding: '0 12px 0 0',
+                            fontSize: '1rem',
+                            color: 'white',          // ← white text so it's always visible
+                            caretColor: '#A78BFA',   // ← violet cursor
+                        }}
                     />
 
-                    {/* Enter button */}
+                    {/* Explore button */}
                     <button
                         type="submit"
                         disabled={!query.trim()}
-                        className="mr-3 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 disabled:opacity-30"
+                        className="mr-3 px-5 rounded-full text-sm font-semibold transition-all duration-200 disabled:opacity-30"
                         style={{
+                            height: '40px',
+                            marginRight: '14px',
+                            marginLeft: '14px',
                             background: query.trim()
                                 ? 'linear-gradient(135deg, #60A5FA, #A78BFA)'
                                 : 'rgba(255,255,255,0.08)',
                             color: 'white',
+                            flexShrink: 0,
                         }}
                     >
                         Explore
                     </button>
                 </div>
 
-                {/* Hint */}
+                {/* Example prompts */}
                 <p className="mt-3 text-xs text-gray-600 tracking-wide">
                     Try: <span className="text-gray-500 italic">"dystopian psychological thriller"</span> · <span className="text-gray-500 italic">"feel-good adventure"</span> · <span className="text-gray-500 italic">"mind-bending sci-fi"</span>
                 </p>

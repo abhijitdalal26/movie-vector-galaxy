@@ -25,6 +25,8 @@ export interface GalaxyStar {
     y: number;
     z: number;
     title: string;
+    vote_average: number | null;
+    genres: string | null;
 }
 
 export const api = {
@@ -64,19 +66,25 @@ export const api = {
     /**
      * Fetch galaxy star positions for the 3D renderer.
      * @param limit  Device-appropriate star count (3000/8000/20000).
-     * @param region Optional spatial filter {x, y, z, radius} for Phase 4 Explore Mode.
+     * @param regionX Optional spatial filter X
+     * @param regionY Optional spatial filter Y
+     * @param regionZ Optional spatial filter Z
+     * @param radius  Optional spatial filter radius
      */
     getGalaxyData: async (
         limit: number = 20000,
-        region?: { x: number; y: number; z: number; radius: number }
+        regionX?: number,
+        regionY?: number,
+        regionZ?: number,
+        radius?: number
     ): Promise<GalaxyStar[]> => {
         try {
             const params: Record<string, number> = { limit };
-            if (region) {
-                params.region_x = region.x;
-                params.region_y = region.y;
-                params.region_z = region.z;
-                params.radius = region.radius;
+            if (regionX !== undefined && regionY !== undefined && regionZ !== undefined && radius !== undefined) {
+                params.region_x = regionX;
+                params.region_y = regionY;
+                params.region_z = regionZ;
+                params.radius = radius;
             }
             const response = await axios.get(`${API_BASE_URL}/galaxy`, { params });
             return response.data.stars || [];

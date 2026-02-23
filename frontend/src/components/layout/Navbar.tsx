@@ -1,6 +1,13 @@
+'use client';
+
 import Link from 'next/link';
+import { useGalaxy } from '@/context/GalaxyContext';
 
 export default function Navbar() {
+    const { isExploreMode } = useGalaxy();
+
+    if (isExploreMode) return null;
+
     return (
         <nav className="relative z-50 w-full px-8 py-5 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent">
             {/* ── Branding ── */}

@@ -55,7 +55,7 @@ class DataEngine:
         self.galaxy_df = pd.read_parquet(GALAXY_COORDS_PATH)  # columns: vector_id, x, y, z
 
         # Pre-join with titles so we avoid repeated merges per HTTP request
-        title_series = self.metadata_df[['vector_id', 'title']].reset_index(drop=True)
+        title_series = self.metadata_df[['vector_id', 'title', 'vote_average', 'genres']].reset_index(drop=True)
         self.galaxy_full = self.galaxy_df.merge(title_series, on='vector_id', how='left')
 
         logger.info(f"Data Engine loaded successfully in {time.time() - start_time:.2f}s")
@@ -143,17 +143,46 @@ class DataEngine:
             df = df.iloc[::step].head(limit)
 
         # Drop NaNs and cast to native Python types for JSON serialization
-        df_out = df[['vector_id', 'x', 'y', 'z', 'title']].copy()
-        df_out['title'] = df_out['title'].fillna("Unknown")
+        df_out = df[['vector_id', 'x', 'y', 'z', 'title', 'vote_average', 'genres']].copy()
+        df_out['title'] = df_out['title'].fillna('Unknown')
+        df_out['genres'] = df_out['genres'].fillna('')
+        df_out['vote_average'] = pd.to_numeric(df_out['vote_average'], errors='coerce').fillna(0.0)
         df_out = df_out.astype({
             'vector_id': 'int',
             'x': 'float',
             'y': 'float',
             'z': 'float',
-            'title': 'str'
+            'title': 'str',
+            'vote_average': 'float',
+            'genres': 'str',
         })
 
         return df_out.to_dict(orient='records')
+
+    def get_neighbors_by_vector_id(self, vector_id: int, radius: float = 0.3) -> list[dict]:
+        """
+        Returns stars within `radius` UMAP units of the movie at vector_id.
+        Used by /api/galaxy/neighbors for Explore Mode cluster zoom.
+        """
+        row = self.galaxy_full[self.galaxy_full['vector_id'] == vector_id]
+        if row.empty:
+            return []
+        cx, cy, cz = float(row.iloc[0]['x']), float(row.iloc[0]['y']), float(row.iloc[0]['z'])
+
+        df = self.galaxy_full
+        dx = df['x'] - cx
+        dy = df['y'] - cy
+        dz = df['z'] - cz
+        neighbors = df[(dx**2 + dy**2 + dz**2) <= radius**2].copy()
+
+        neighbors['title'] = neighbors['title'].fillna('Unknown')
+        neighbors['genres'] = neighbors['genres'].fillna('')
+        neighbors['vote_average'] = pd.to_numeric(neighbors['vote_average'], errors='coerce').fillna(0.0)
+        neighbors = neighbors.astype({
+            'vector_id': 'int', 'x': 'float', 'y': 'float', 'z': 'float',
+            'title': 'str', 'vote_average': 'float', 'genres': 'str',
+        })
+        return neighbors[['vector_id', 'x', 'y', 'z', 'title', 'vote_average', 'genres']].to_dict(orient='records')
 
 
 # Singleton instance
