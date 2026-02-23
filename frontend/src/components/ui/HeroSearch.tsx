@@ -47,22 +47,23 @@ export default function HeroSearch() {
             {/* Search bar */}
             <form
                 onSubmit={handleSubmit}
-                className="w-full max-w-2xl mt-8 animate-fade-in"
-                style={{ animationDelay: '0.3s' }}
+                className="animate-fade-in"
+                style={{ width: '100%', maxWidth: '560px', marginTop: '2rem', animationDelay: '0.3s' }}
             >
                 <div
-                    className="relative flex items-center rounded-2xl transition-all duration-300"
+                    className="relative flex items-center transition-all duration-300"
                     style={{
                         background: focused
-                            ? 'rgba(167, 139, 250, 0.08)'
-                            : 'rgba(255, 255, 255, 0.04)',
+                            ? 'rgba(167, 139, 250, 0.10)'
+                            : 'rgba(255, 255, 255, 0.06)',
                         border: focused
-                            ? '1.5px solid rgba(167, 139, 250, 0.6)'
-                            : '1.5px solid rgba(255, 255, 255, 0.12)',
+                            ? '1.5px solid rgba(167, 139, 250, 0.7)'
+                            : '1.5px solid rgba(255, 255, 255, 0.15)',
                         boxShadow: focused
-                            ? '0 0 0 4px rgba(167, 139, 250, 0.12), 0 20px 60px rgba(0,0,0,0.4)'
-                            : '0 8px 32px rgba(0,0,0,0.3)',
-                        backdropFilter: 'blur(20px)',
+                            ? '0 0 0 5px rgba(167, 139, 250, 0.15), 0 24px 70px rgba(0,0,0,0.5)'
+                            : '0 8px 40px rgba(0,0,0,0.4)',
+                        backdropFilter: 'blur(24px)',
+                        borderRadius: '9999px',
                     }}
                 >
                     {/* Search icon */}
@@ -81,7 +82,7 @@ export default function HeroSearch() {
                         onFocus={() => setFocused(true)}
                         onBlur={() => setFocused(false)}
                         placeholder="Search a movie, vibe, feeling, or plot..."
-                        className="flex-1 bg-transparent py-4 pr-4 text-base md:text-lg text-white placeholder-gray-500 outline-none"
+                        className="flex-1 bg-transparent py-5 pr-4 text-base md:text-lg text-white placeholder-gray-500 outline-none"
                         autoComplete="off"
                     />
 
@@ -89,7 +90,7 @@ export default function HeroSearch() {
                     <button
                         type="submit"
                         disabled={!query.trim()}
-                        className="mr-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-30"
+                        className="mr-3 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 disabled:opacity-30"
                         style={{
                             background: query.trim()
                                 ? 'linear-gradient(135deg, #60A5FA, #A78BFA)'
