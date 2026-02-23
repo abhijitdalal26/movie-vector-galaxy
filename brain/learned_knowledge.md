@@ -1,5 +1,27 @@
 # Learned Knowledge & Technical Solutions
 
+---
+
+## Phase 3.1: Homepage Hero Redesign
+
+### 5. Three.js Canvas in a Fixed Container Resolves to 0×0 (Stacking Context Bug)
+**Problem**: The `<Canvas>` rendered in a tiny 300×150px box despite the parent having `fixed inset-0` CSS classes.
+- **Cause**: When a `fixed`-positioned element is inside a parent with a CSS `transform`, `filter`, `will-change`, or certain `overflow` values, the browser creates a new **containing block**, preventing `inset-0` from resolving against the viewport. Tailwind's `bg-gradient-*` utilities can trigger this silently.
+- **Solution**: Move the canvas container **outside `<main>`** entirely (using a React Fragment `<>`) and use inline `style` with explicit viewport units:
+```tsx
+<div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 0 }}>
+  <GalaxyBackgroundWrapper />
+</div>
+```
+Percentage-based `width/height: 100%` on the canvas also requires a parent with a defined pixel height — use viewport units on the wrapper instead.
+
+### 6. Two-Zone Homepage Pattern for 3D + Scrollable Content
+**Pattern**: When a Three.js background needs to sit behind a hero section with content below the fold:
+1. Galaxy canvas: `position: fixed, z-index: 0` — behind everything, outside `<main>`.
+2. Hero section: `height: 100vh, z-index: 1` — fills first viewport, transparent background.
+3. Content section: `position: relative, z-index: 1, background: black` — below the fold, opaque to occlude the galaxy behind it.
+4. Vignette gradient at the bottom of the hero bridges the two sections visually.
+
 This document tracks technical hurdles encountered during development and their implemented solutions. It serves as a historical record to prevent repeating mistakes as the project scales.
 
 ---
