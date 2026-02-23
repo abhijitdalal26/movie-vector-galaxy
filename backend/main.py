@@ -1,6 +1,7 @@
 import logging
 import math
 from contextlib import asynccontextmanager
+from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -24,11 +25,10 @@ def clean_dict_for_json(d: dict) -> dict:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load all data on startup (Parquet, FAISS, NPY, SentenceTransformer)
+    # Load all data on startup (Parquet, FAISS, NPY, SentenceTransformer, Galaxy)
     data_engine.load_all()
     logger.info("Application lifespan started.")
     yield
-    # Clean up (if needed) on shutdown
     logger.info("Application shutdown.")
 
 app = FastAPI(title="Movie Vector Galaxy API", lifespan=lifespan)
@@ -36,7 +36,7 @@ app = FastAPI(title="Movie Vector Galaxy API", lifespan=lifespan)
 # Allow frontend requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For dev, restrict in prod
+    allow_origins=["*"],  # For dev, restrict in prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,19 +59,46 @@ def get_trending_movies(limit: int = 10):
         logger.error(f"Error fetching trending movies: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@app.get("/api/galaxy")
+def get_galaxy_data(
+    limit: int = 20000,
+    region_x: Optional[float] = None,
+    region_y: Optional[float] = None,
+    region_z: Optional[float] = None,
+    radius: Optional[float] = None,
+):
+    """
+    Serves 3D galaxy star coordinates for the Three.js renderer.
+
+    Query params:
+      - limit: Number of stars. Frontend sends device-appropriate value:
+               mobile=3000, tablet=8000, desktop=20000
+      - region_x/y/z + radius: Spatial sphere filter for Phase 4 Explore Mode
+    """
+    try:
+        stars = data_engine.get_galaxy_data(
+            limit=limit,
+            region_x=region_x,
+            region_y=region_y,
+            region_z=region_z,
+            radius=radius,
+        )
+        return {"count": len(stars), "stars": stars}
+    except Exception as e:
+        logger.error(f"Error fetching galaxy data: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/api/movies/{vector_id}")
 def get_movie_by_id(vector_id: int):
     movie = data_engine.get_movie_by_vector_id(vector_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
-    
     return clean_dict_for_json(movie)
 
 @app.post("/api/search/semantic")
 def search_semantic(query_data: SearchQuery):
     if not query_data.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty")
-        
     try:
         results = data_engine.search_similar(query_data.query, k=query_data.limit)
         return {"query": query_data.query, "results": [clean_dict_for_json(m) for m in results]}
