@@ -168,7 +168,7 @@ export default function GalaxyBackground() {
             gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
             camera={{ fov: 75 }}
             dpr={[1, 1.5]}
-            style={{ background: 'transparent' }}
+            style={{ background: 'transparent', width: '100%', height: '100%' }}
         >
             <CameraSetup />
             <GalaxyPoints stars={stars} />

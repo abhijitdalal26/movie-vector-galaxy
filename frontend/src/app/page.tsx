@@ -1,55 +1,79 @@
 import GalaxyBackgroundWrapper from '@/components/3d/GalaxyBackgroundWrapper';
 import Navbar from '@/components/layout/Navbar';
+import HeroSearch from '@/components/ui/HeroSearch';
+import ScrollHint from '@/components/ui/ScrollHint';
 import { MovieRow } from '@/components/ui/MovieRow';
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen bg-black overflow-hidden font-sans">
-
-      {/* ── 3D Galaxy Canvas ─────────────────────────────────────────────────
-          Fixed behind everything else. z-0 keeps it below UI layers.
-          pointer-events-none so it doesn't intercept clicks on the UI.
-      ─────────────────────────────────────────────────────────────────────── */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+    <>
+      {/* ── Fixed 3D Galaxy Canvas — rendered at the <body> level ──────────── 
+          Using explicit viewport units (100vw/100vh) to guarantee full-screen
+          size regardless of stacking context. Set outside <main> to avoid any
+          parent transform / overflow that could create a new positioning context.
+      ──────────────────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      >
         <GalaxyBackgroundWrapper />
       </div>
 
-      {/* Deep-space dark vignette at the very bottom so rows remain readable */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-[1] pointer-events-none"
-        style={{ height: '55vh', background: 'linear-gradient(to top, #000 0%, #000 20%, transparent 100%)' }}
-      />
+      {/* ── Scroll hint — fixed at bottom of viewport ────────────────────── */}
+      <ScrollHint />
 
-      {/* ── UI Layer ─────────────────────────────────────────────────────── */}
-      <Navbar />
+      <main className="relative bg-transparent font-sans" style={{ zIndex: 1 }}>
 
-      {/* Hero headline */}
-      <div className="relative z-10 pt-[30vh] px-8 sm:px-12 md:px-24 mb-16 animate-fade-in max-w-4xl">
-        <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg">
-          Explore the{' '}
-          <span
+        {/* ── SECTION 1: HERO (exactly 100vh) ────────────────────────────── */}
+        <section className="relative flex flex-col" style={{ height: '100vh' }}>
+
+          {/* Top vignette so navbar text is legible */}
+          <div
+            className="absolute inset-x-0 top-0 pointer-events-none"
             style={{
-              background: 'linear-gradient(to right, #60A5FA, #A78BFA)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              height: '180px',
+              zIndex: 2,
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.80) 0%, transparent 100%)',
             }}
-          >
-            Universe
-          </span>
-          {' '}of Movies
-        </h1>
-        <p className="text-lg md:text-xl text-gray-300 max-w-2xl drop-shadow">
-          Stop scrolling lists. Start exploring a semantic galaxy where films are connected by feelings, plots, and atmosphere.
-        </p>
-      </div>
+          />
 
-      {/* Scrollable movie rows */}
-      <div className="relative z-10 animate-slide-up space-y-4 bg-black/40 backdrop-blur-sm border-t border-white/5 pt-8 pb-24">
-        <MovieRow title="Trending Universe" fetchTrending={true} />
-        <MovieRow title="Mind-Bending Films" fetchTrending={true} />
-      </div>
+          {/* Navbar */}
+          <div style={{ position: 'relative', zIndex: 10 }}>
+            <Navbar />
+          </div>
 
-    </main>
+          {/* Centered hero search */}
+          <div className="flex-1 flex flex-col" style={{ position: 'relative', zIndex: 10 }}>
+            <HeroSearch />
+          </div>
+
+          {/* Bottom vignette — blends galaxy into the black movie rows */}
+          <div
+            className="absolute inset-x-0 bottom-0 pointer-events-none"
+            style={{
+              height: '200px',
+              zIndex: 2,
+              background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.85) 60%, #000 100%)',
+            }}
+          />
+        </section>
+
+        {/* ── SECTION 2: MOVIE ROWS (below the fold) ─────────────────────── */}
+        <section className="bg-black pb-24" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="pt-8 space-y-2">
+            <MovieRow title="Trending Universe" fetchTrending={true} />
+            <MovieRow title="Mind-Bending Films" fetchTrending={true} />
+          </div>
+        </section>
+
+      </main>
+    </>
   );
 }
