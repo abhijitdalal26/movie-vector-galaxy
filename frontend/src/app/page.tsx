@@ -11,15 +11,6 @@ import ExploreFader from '@/components/layout/ExploreFader';
 export default function Home() {
   return (
     <>
-      <ExploreHUD />
-      <StarTooltip />
-
-      {/* ── Fixed 3D Galaxy Canvas — rendered at the <body> level ──────────── 
-          Using explicit viewport units (100vw/100vh) to guarantee full-screen
-          size regardless of stacking context. Set outside <main> to avoid any
-          parent transform / overflow that could create a new positioning context.
-      ──────────────────────────────────────────────────────────────────────── */}
-      <GalaxyBackgroundWrapper />
 
       <ExploreFader>
         {/* ── Scroll hint — fixed at bottom of viewport ────────────────────── */}
@@ -66,9 +57,22 @@ export default function Home() {
 
           {/* ── SECTION 2: MOVIE ROWS (below the fold) ─────────────────────── */}
           <section className="bg-black pb-24" style={{ position: 'relative', zIndex: 10 }}>
-            <div className="pt-8 space-y-2">
-              <MovieRow title="Trending Universe" fetchTrending={true} />
-              <MovieRow title="Mind-Bending Films" fetchTrending={true} />
+            <div className="relative z-10 w-full pt-4 pb-20 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <MovieRow
+                title="🚀 Mind-Bending Sci-Fi"
+                fetchQuery="mind bending psychological sci-fi"
+                limit={15}
+              />
+              <MovieRow
+                title="❤️ Feel-Good Classics"
+                fetchQuery="feel-good heartwarming family classic"
+                limit={15}
+              />
+              <MovieRow
+                title="🔥 Trending Universe"
+                fetchTrending={true}
+                limit={20}
+              />
             </div>
           </section>
 

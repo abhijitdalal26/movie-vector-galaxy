@@ -28,21 +28,36 @@ export default function StarTooltip() {
                 top: pos.y - 10,
                 pointerEvents: 'none',
                 zIndex: 100,
-                background: 'rgba(15, 15, 20, 0.75)',
+                background: 'rgba(15, 15, 20, 0.82)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(167, 139, 250, 0.25)',
                 borderRadius: '8px',
-                padding: '6px 12px',
+                padding: '7px 13px',
                 color: '#fff',
-                fontSize: '13px',
-                fontWeight: 500,
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.55)',
                 whiteSpace: 'nowrap',
                 transition: 'opacity 0.15s ease',
             }}
         >
-            {hoveredStar.title}
+            {/* Title */}
+            <div style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.01em' }}>
+                {hoveredStar.title}
+            </div>
+
+            {/* Rating + genres row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
+                {hoveredStar.vote_average != null && (
+                    <span style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 500 }}>
+                        ★ {hoveredStar.vote_average.toFixed(1)}
+                    </span>
+                )}
+                {hoveredStar.genres && (
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+                        {hoveredStar.genres.split(',').slice(0, 2).join(', ')}
+                    </span>
+                )}
+            </div>
         </div>
     );
 }

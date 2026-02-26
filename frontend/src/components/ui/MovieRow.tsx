@@ -10,24 +10,32 @@ interface MovieRowProps {
     icon?: React.ReactNode;
     movies?: Movie[];
     fetchTrending?: boolean;
+    fetchQuery?: string;
     limit?: number;
 }
 
-export function MovieRow({ title, icon, movies: initialMovies, fetchTrending, limit = 10 }: MovieRowProps) {
+export function MovieRow({ title, icon, movies: initialMovies, fetchTrending, fetchQuery, limit = 10 }: MovieRowProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [movies, setMovies] = useState<Movie[]>(initialMovies || []);
-    const [isLoading, setIsLoading] = useState(!!fetchTrending && !initialMovies?.length);
+    const [isLoading, setIsLoading] = useState((!!fetchTrending || !!fetchQuery) && !initialMovies?.length);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
 
     useEffect(() => {
-        if (fetchTrending && !initialMovies?.length) {
+        if (initialMovies?.length) return;
+
+        if (fetchQuery) {
+            api.searchSemantic(fetchQuery, limit).then((data) => {
+                setMovies(data);
+                setIsLoading(false);
+            });
+        } else if (fetchTrending) {
             api.getTrending(limit).then((data) => {
                 setMovies(data);
                 setIsLoading(false);
             });
         }
-    }, [fetchTrending, initialMovies, limit]);
+    }, [fetchTrending, fetchQuery, initialMovies, limit]);
 
     const updateScrollState = () => {
         if (!scrollRef.current) return;

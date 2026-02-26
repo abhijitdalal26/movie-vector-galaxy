@@ -21,6 +21,10 @@ interface GalaxyContextValue {
 
     isTraveling: boolean;
     setIsTraveling: (v: boolean) => void;
+
+    // Phase 4: cross-page intent — "View in Galaxy" from Movie Detail page
+    pendingVectorId: number | null;
+    setPendingVectorId: (id: number | null) => void;
 }
 
 const GalaxyContext = createContext<GalaxyContextValue | null>(null);
@@ -32,6 +36,7 @@ export function GalaxyProvider({ children }: { children: ReactNode }) {
     const [selectedStar, setSelectedStar] = useState<GalaxyStar | null>(null);
     const [cameraTarget, setCameraTarget] = useState<THREE.Vector3 | null>(null);
     const [isTraveling, setIsTraveling] = useState(false);
+    const [pendingVectorId, setPendingVectorId] = useState<number | null>(null);
 
     const enterExplore = useCallback(() => {
         setIsExploreMode(true);
@@ -47,6 +52,7 @@ export function GalaxyProvider({ children }: { children: ReactNode }) {
         setHoveredStar(null);
         setCameraTarget(null);
         setIsTraveling(false);
+        setPendingVectorId(null);
     }, []);
 
     return (
@@ -63,6 +69,8 @@ export function GalaxyProvider({ children }: { children: ReactNode }) {
                 setCameraTarget,
                 isTraveling,
                 setIsTraveling,
+                pendingVectorId,
+                setPendingVectorId,
             }}
         >
             {children}

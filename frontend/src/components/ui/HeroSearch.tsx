@@ -17,7 +17,7 @@ export default function HeroSearch() {
     };
 
     return (
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center animate-slide-up">
 
             {/* Branding */}
             <div className="mb-3 animate-fade-in">

@@ -12,10 +12,6 @@ import { useGalaxy } from '@/context/GalaxyContext';
 // ─── Dynamic star count for production scale (up to 1M items) ─────────────────
 function getAdaptiveLimit(): number {
     if (typeof window === 'undefined') return 5000;
-
-    // For Phase 4.5 Dynamic LOD, we only load a sparse "Zoom Level A" background
-    // initially. We set the base to 5,000 to keep the initial payload tiny and 
-    // performance high, allowing denser clusters to load dynamically on explore.
     return 5000;
 }
 
@@ -36,25 +32,32 @@ const PALETTE = [
 const vertexShader = /* glsl */ `
   attribute float aSize;
   attribute vec3  aColor;
-  attribute float aHighlight;
+  attribute float size;
+  attribute vec3  color;
+  attribute float highlight;
   varying   vec3  vColor;
   varying   float vAlpha;
   varying   float vHighlight;
   uniform   float uTime;
 
   void main() {
-    vColor = aColor;
-    vHighlight = aHighlight;
-    // Per-star breathing pulse offset by world position
-    float phase  = uTime * 0.8 + position.x * 2.3 + position.z * 1.7;
-    float pulse  = 0.85 + 0.15 * sin(phase);
-    vAlpha = pulse;
+    vColor = color;
+    vHighlight = highlight;
 
-    float scale = 1.0 + aHighlight * 2.5; // selected = 3.5× bigger
+    // Depth-based alpha fade: stars further out are dimmer
+    float dist = length(position);
+    float depthAlpha = 1.0 - 0.45 * smoothstep(0.6, 1.3, dist);
+
+    // Twinkle factor
+    float noise = sin(uTime * 1.5 + position.x * 10.0 + position.y * 10.0) * 0.5 + 0.5;
+
+    float scaleFactor = 1.0 + highlight * 2.5; // selected = 3.5× bigger
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize    = aSize * scale * pulse * (280.0 / -mvPosition.z);
-    gl_Position     = projectionMatrix * mvPosition;
+    gl_PointSize = size * scaleFactor * (1.0 + noise * 0.3) * (280.0 / -mvPosition.z);
+    gl_Position = projectionMatrix * mvPosition;
+
+    vAlpha = depthAlpha;
   }
 `;
 
@@ -82,7 +85,7 @@ function GalaxyPoints({ stars }: { stars: GalaxyStar[] }) {
     const matRef = useRef<THREE.ShaderMaterial>(null!);
     const clock = useRef(new THREE.Clock());
     const geo = useRef(new THREE.BufferGeometry());
-    const { isExploreMode, hoveredStar, selectedStar, isTraveling, setCameraTarget, setSelectedStar, setHoveredStar } = useGalaxy();
+    const { isExploreMode, hoveredStar, selectedStar, setSelectedStar, setHoveredStar } = useGalaxy();
 
     useEffect(() => {
         if (!stars.length) return;
@@ -93,36 +96,53 @@ function GalaxyPoints({ stars }: { stars: GalaxyStar[] }) {
         const sizes = new Float32Array(n);
         const highlights = new Float32Array(n);
 
-        stars.forEach((star, i) => {
-            positions[i * 3] = star.x * COORD_SCALE;
-            positions[i * 3 + 1] = star.y * COORD_SCALE;
-            positions[i * 3 + 2] = star.z * COORD_SCALE;
+        const baseColor = new THREE.Color();
+        const genreColor = new THREE.Color();
 
-            // Colour by distance from origin (core → edge)
-            const mag = Math.sqrt(star.x ** 2 + star.y ** 2 + star.z ** 2);
-            const t = Math.min(mag / 1.5, 1);
-            let col: THREE.Color;
-            if (t < 0.15) col = PALETTE[0];
-            else if (t < 0.35) col = PALETTE[1];
-            else if (t < 0.60) col = PALETTE[2];
-            else if (t < 0.85) col = PALETTE[3];
-            else col = PALETTE[4];
-            if (Math.random() < 0.04) col = PALETTE[4]; // ~4% random cyan accents
+        const selectedVectorId = selectedStar?.vector_id;
+        const hoveredVectorId = hoveredStar?.vector_id;
 
-            colors[i * 3] = col.r;
-            colors[i * 3 + 1] = col.g;
-            colors[i * 3 + 2] = col.b;
+        for (let i = 0; i < n; i++) {
+            const s = stars[i];
+            positions[i * 3] = s.x * COORD_SCALE;
+            positions[i * 3 + 1] = s.y * COORD_SCALE;
+            positions[i * 3 + 2] = s.z * COORD_SCALE;
 
-            sizes[i] = 1.0 + Math.random() * 2.5; // 1.0 – 3.5
-            highlights[i] = 0.0;
-        });
+            // Distance from origin [0..1] mapped to a gentle purple/blue/cyan palette
+            const d = Math.sqrt(s.x * s.x + s.y * s.y + s.z * s.z);
+            const t = Math.min(1.0, d);
+            baseColor.setHSL(0.7 - t * 0.3, 0.8, 0.6); // Base star field color
+
+            // Genre-based tinting
+            if (s.genres) {
+                const g = s.genres.toLowerCase();
+                if (g.includes('action') || g.includes('adventure')) genreColor.setHex(0xF97316); // Orange
+                else if (g.includes('horror') || g.includes('thriller')) genreColor.setHex(0xEF4444); // Red
+                else if (g.includes('romance') || g.includes('drama')) genreColor.setHex(0xEC4899); // Pink
+                else if (g.includes('science fiction') || g.includes('fantasy')) genreColor.setHex(0x60A5FA); // Blue
+                else if (g.includes('animation') || g.includes('family')) genreColor.setHex(0xFBBF24); // Yellow
+                else genreColor.copy(baseColor);
+
+                // Mix 30% genre color with 70% base distance color
+                baseColor.lerp(genreColor, 0.35);
+            }
+
+            colors[i * 3] = baseColor.r;
+            colors[i * 3 + 1] = baseColor.g;
+            colors[i * 3 + 2] = baseColor.b;
+
+            // Size [1.0 .. 3.5] based roughly on rating or random if undefined
+            sizes[i] = s.vote_average ? Math.max(1.0, s.vote_average * 0.35) : (1.0 + Math.random() * 2.5);
+
+            highlights[i] = (selectedVectorId === s.vector_id) ? 1.0 : (hoveredVectorId === s.vector_id ? 0.4 : 0.0);
+        }
 
         geo.current.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geo.current.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
-        geo.current.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
-        geo.current.setAttribute('aHighlight', new THREE.BufferAttribute(highlights, 1));
+        geo.current.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geo.current.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        geo.current.setAttribute('highlight', new THREE.BufferAttribute(highlights, 1));
         geo.current.computeBoundingSphere();
-    }, [stars]);
+    }, [stars, selectedStar, hoveredStar]);
 
     // Update highlights dynamically without rebuilding geometry
     useEffect(() => {
@@ -141,8 +161,8 @@ function GalaxyPoints({ stars }: { stars: GalaxyStar[] }) {
     useFrame(() => {
         if (!pointsRef.current) return;
 
-        // Only auto-rotate if we are NOT in explore mode OR traveling
-        if (!isExploreMode || isTraveling) {
+        // Only auto-rotate when NOT in explore mode
+        if (!isExploreMode) {
             pointsRef.current.rotation.y += 0.00025;  // slow primary yaw
             pointsRef.current.rotation.x = 0.28;     // 16° static disc tilt
             pointsRef.current.rotation.z += 0.000035; // subtle micro-roll
@@ -159,17 +179,14 @@ function GalaxyPoints({ stars }: { stars: GalaxyStar[] }) {
             geometry={geo.current}
             frustumCulled={false}
             onClick={(e) => {
-                if (!isExploreMode || isTraveling) return;
+                if (!isExploreMode) return;
                 e.stopPropagation();
                 if (e.index !== undefined) {
-                    const clickedStar = stars[e.index];
-                    setSelectedStar(clickedStar);
-                    // Reset camera target if selecting a new star directly
-                    setCameraTarget(null);
+                    setSelectedStar(stars[e.index]);
                 }
             }}
             onPointerMove={(e) => {
-                if (!isExploreMode || isTraveling) return;
+                if (!isExploreMode) return;
                 e.stopPropagation();
                 if (e.index !== undefined) {
                     const hitStar = stars[e.index];
@@ -180,7 +197,7 @@ function GalaxyPoints({ stars }: { stars: GalaxyStar[] }) {
                 }
             }}
             onPointerOut={() => {
-                if (!isExploreMode || isTraveling) return;
+                if (!isExploreMode) return;
                 setHoveredStar(null);
                 document.body.style.cursor = 'crosshair';
             }}
@@ -222,12 +239,11 @@ function LODManager({ starsMap, setStarsMap }: { starsMap: Map<number, GalaxySta
 
         // Radius based on how far zoomed out we are
         const distFromCore = camera.position.length() / COORD_SCALE;
-        const radius = Math.max(0.1, Math.min(distFromCore * 0.5, 0.4)); // Search radius 0.1 to 0.4 in UMAP space
+        const radius = Math.max(0.1, Math.min(distFromCore * 0.5, 0.4));
 
         isFetching.current = true;
         lastFetchTarget.current.copy(camera.position);
 
-        // Limit to 5000 local points per fetch to avoid choking the engine
         api.getGalaxyData(5000, regionX, regionY, regionZ, radius)
             .then(newStars => {
                 if (newStars && newStars.length > 0) {
@@ -255,43 +271,55 @@ function LODManager({ starsMap, setStarsMap }: { starsMap: Map<number, GalaxySta
     return null;
 }
 
-// ─── Camera setup & Raycaster ───────────────────────────────────────────────────
+// ─── Camera Setup & Dynamic Raycaster ──────────────────────────────────────────
 function CameraSetup() {
-    const { camera, gl, raycaster, pointer, scene } = useThree();
-    const { isExploreMode, setHoveredStar, isTraveling } = useGalaxy();
+    const { camera, raycaster } = useThree();
+    const { isExploreMode } = useGalaxy();
 
     // Setup initial camera position
     useEffect(() => {
         camera.position.set(0, 45, 110);
         camera.lookAt(0, 0, 0);
-        // Generous click envelope for tiny stars on high-DPI screens
+        // Starting threshold
         raycaster.params.Points = { threshold: 15 };
     }, [camera, raycaster]);
 
-    // Handle frame-level hover detection (cheaper than DOM pointer events on 20k items)
+    // Dynamically scale raycaster threshold based on camera distance
     useFrame(() => {
-        if (!isExploreMode || isTraveling) return;
-
-        raycaster.setFromCamera(pointer, camera);
-        const intersects = raycaster.intersectObjects(scene.children);
-
-        if (intersects.length > 0) {
-            const hit = intersects[0];
-            // Get stars from parent (GalaxyPoints manages the array, but we can read it off geometry or state)
-            // Actually, simplest is to use R3F's built-in pointer events on the <points> mesh!
-            // Wait, we attached onClick, but onPointerMove can be expensive. Let's use it though, 
-            // since R3F's raycaster is optimized. I will adjust GalaxyPoints to use onPointerMove.
-        }
+        if (!isExploreMode) return;
+        const dist = camera.position.length();
+        const threshold = Math.max(2.5, dist * 0.035);
+        raycaster.params.Points = { threshold };
     });
+
+    return null;
+}
+
+// ─── Pending Star Resolver ──────────────────────────────────────────────────────
+// On page load it checks if a "View in Galaxy" deep-link was set. Once stars are
+// loaded, it finds the target star and selects it (no camera travel).
+function PendingStarResolver({ starsMap }: { starsMap: Map<number, GalaxyStar> }) {
+    const { pendingVectorId, setPendingVectorId, setSelectedStar } = useGalaxy();
+    const resolved = useRef(false);
+
+    useEffect(() => {
+        if (!pendingVectorId || resolved.current || starsMap.size === 0) return;
+
+        const star = starsMap.get(pendingVectorId);
+        if (!star) return; // star might not be in the initial 5k — skip gracefully
+
+        resolved.current = true;
+        setPendingVectorId(null);
+        setSelectedStar(star);
+    }, [pendingVectorId, starsMap, setPendingVectorId, setSelectedStar]);
 
     return null;
 }
 
 // ─── Root exported component ───────────────────────────────────────────────────
 export default function GalaxyBackground() {
-    // We use a Map to keep unique stars by vector_id 
     const [starsMap, setStarsMap] = useState<Map<number, GalaxyStar>>(new Map());
-    const { isExploreMode, isTraveling } = useGalaxy();
+    const { isExploreMode } = useGalaxy();
 
     useEffect(() => {
         const limit = getAdaptiveLimit();
@@ -302,7 +330,6 @@ export default function GalaxyBackground() {
         });
     }, []);
 
-    // Convert Map back to array for the geometry builder
     const starsArray = Array.from(starsMap.values());
 
     return (
@@ -314,9 +341,10 @@ export default function GalaxyBackground() {
         >
             <CameraSetup />
             <LODManager starsMap={starsMap} setStarsMap={setStarsMap} />
+            <PendingStarResolver starsMap={starsMap} />
             <GalaxyPoints stars={starsArray} />
 
-            {isExploreMode && !isTraveling && (
+            {isExploreMode && (
                 <OrbitControls
                     enableZoom={true}
                     enablePan={true}

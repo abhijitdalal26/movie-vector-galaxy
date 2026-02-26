@@ -1,12 +1,13 @@
 import logging
 import math
+import os
+import httpx
 from contextlib import asynccontextmanager
 from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
-
 from core.data import data_engine
 
 logging.basicConfig(level=logging.INFO)
@@ -25,7 +26,6 @@ def clean_dict_for_json(d: dict) -> dict:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load all data on startup (Parquet, FAISS, NPY, SentenceTransformer, Galaxy)
     data_engine.load_all()
     logger.info("Application lifespan started.")
     yield
@@ -33,10 +33,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Movie Vector Galaxy API", lifespan=lifespan)
 
-# Allow frontend requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For dev, restrict in prod
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -67,14 +66,6 @@ def get_galaxy_data(
     region_z: Optional[float] = None,
     radius: Optional[float] = None,
 ):
-    """
-    Serves 3D galaxy star coordinates for the Three.js renderer.
-
-    Query params:
-      - limit: Number of stars. Frontend sends device-appropriate value:
-               mobile=3000, tablet=8000, desktop=20000
-      - region_x/y/z + radius: Spatial sphere filter for Phase 4 Explore Mode
-    """
     try:
         stars = data_engine.get_galaxy_data(
             limit=limit,
@@ -90,10 +81,6 @@ def get_galaxy_data(
 
 @app.get("/api/galaxy/neighbors")
 def get_galaxy_neighbors(vector_id: int, radius: float = 0.3):
-    """
-    Returns all galaxy stars within `radius` UMAP units of `vector_id`.
-    Used by Explore Mode when zooming into a cluster.
-    """
     try:
         neighbors = data_engine.get_neighbors_by_vector_id(vector_id=vector_id, radius=radius)
         return {"count": len(neighbors), "stars": neighbors}

@@ -11,10 +11,8 @@
 - **3D Rendering**: React Three Fiber (Three.js wrappers). Leverages client GPU for rendering and visualizations.
 - **Styling**: TailwindCSS
 - **Animations**: Framer Motion
-- **External UI Integrations**: 
   - Posters via TMDB Image CDN (`metadata.poster_path`).
   - Cast Images via TMDB API (free tier).
-  - Trailers via YouTube embeds (utilizing TMDB video endpoints).
 
 ## Backend (FastAPI / Python)
 **Responsibilities**: Semantic search, recommendation algorithms, lightweight data serving, API endpoints for the frontend.

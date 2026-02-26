@@ -58,3 +58,22 @@ df_out = df_out.astype({
 **Problem**: Build error `ssr: false is not allowed with next/dynamic in Server Components`.
 - **Cause**: By default, Next.js App Router pages (`src/app/page.tsx`) are Server Components. Three.js requires browser APIs (`WebGLRenderer`, `window`) and must be dynamically imported with `ssr: false`, which is illegal inside a Server Component.
 **Solution**: Created a thin wrapper Client Component (`GalaxyBackgroundWrapper.tsx`) marked with `'use client'`. This wrapper handles the `next/dynamic` import with `ssr: false` and is then imported normally into the Server Component `page.tsx`.
+
+---
+
+## Phase 5: Polish & Integrations
+
+### 1. React Hydration Mismatch with Full-Viewport Canvases
+**Problem**: Next.js threw console warnings: `Warning: Expected server HTML to contain a matching <div> in <div>`.
+- **Cause**: When dealing with 3D canvases dynamically imported globally, the server renders an empty DOM node, but the client immediately hydrates it with full canvas markup before React recognizes the state sync.
+**Solution**: Applied the native `suppressHydrationWarning` prop directly to the parent `div` of the `GalaxyBackgroundWrapper` in `layout.tsx`.
+
+### 2. Framer Motion `<AnimatePresence>` in Next.js App Router Layouts
+**Problem**: Build Error `You're importing a component that needs usePathname. This React Hook only works in a Client Component.` inside the Root Layout.
+- **Cause**: To trigger layout animations on route changes using `framer-motion`, you must pass the `usePathname()` hook as the `key` to `motion.div`. However, `layout.tsx` is inherently a Server Component, so it cannot execute client hooks.
+**Solution**: Extracted the transition logic into a dedicated client wrapper: `PageTransition.tsx` marked with `'use client'`. This file handles `usePathname()` and `AnimatePresence`, and is then injected directly into the Server Component `layout.tsx`.
+
+### 3. Server-Side HTTP Gateway Timeouts (TMDB API)
+**Problem**: The custom `/api/movies/{id}/trailer` endpoint frequently threw python `ConnectTimeout` exceptions or `403` errors due to ISP blocks, which in turn froze Next.js SSR.
+- **Cause**: The TMDB API (`api.themoviedb.org`) is routinely blocked by regional ISPs (e.g., in India). Because the Next.js `page.tsx` awaited the backend response during SSR, the entire frontend froze for up to 30 seconds.
+**Solution**: Completely removed the TMDB API integration and the `.env` requirements. Refactored the frontend to use a beautiful static `TrailerPlayer` hero component that relies solely on the local dataset's image paths and metadata rather than fetching external iframes.

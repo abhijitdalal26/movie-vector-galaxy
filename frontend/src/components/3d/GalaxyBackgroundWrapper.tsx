@@ -14,7 +14,7 @@ export default function GalaxyBackgroundWrapper() {
     const { isExploreMode } = useGalaxy();
 
     return (
-        <div style={{
+        <div suppressHydrationWarning style={{
             position: 'fixed',
             inset: 0,
             width: '100vw',

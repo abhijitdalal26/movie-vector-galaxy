@@ -76,7 +76,7 @@ export default function SearchBar() {
                                         <div className="w-10 h-14 bg-galaxy-800 rounded flex-shrink-0 overflow-hidden relative">
                                             {movie.poster_path && (
                                                 <img
-                                                    src={api.getPosterUrl(movie.poster_path, 'w92')}
+                                                    src={api.getPosterUrl(movie.poster_path, 'w92') || undefined}
                                                     alt={movie.title}
                                                     className="object-cover w-full h-full"
                                                 />
