@@ -57,21 +57,27 @@ export default function Home() {
 
           {/* ── SECTION 2: MOVIE ROWS (below the fold) ─────────────────────── */}
           <section className="bg-black pb-24" style={{ position: 'relative', zIndex: 10 }}>
-            <div className="relative z-10 w-full pt-4 pb-20 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <div className="relative z-10 w-full pt-8 pb-20 animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <MovieRow
-                title="🚀 Mind-Bending Sci-Fi"
-                fetchQuery="mind bending psychological sci-fi"
+                title="Recommended for You"
+                fetchQuery="cinematic visual masterpiece"
                 limit={15}
+                size="large"
               />
               <MovieRow
-                title="❤️ Feel-Good Classics"
-                fetchQuery="feel-good heartwarming family classic"
-                limit={15}
-              />
-              <MovieRow
-                title="🔥 Trending Universe"
+                title="Trending Universe"
                 fetchTrending={true}
                 limit={20}
+              />
+              <MovieRow
+                title="Mind-Bending Thrillers"
+                fetchQuery="mind bending psychological thriller plot twist"
+                limit={15}
+              />
+              <MovieRow
+                title="Epic Adventures"
+                fetchQuery="epic journey fantasy adventure world building"
+                limit={15}
               />
             </div>
           </section>

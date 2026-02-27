@@ -9,9 +9,17 @@ const GalaxyBackground = dynamic(
 );
 
 import { useGalaxy } from '@/context/GalaxyContext';
+import { usePathname } from 'next/navigation';
 
 export default function GalaxyBackgroundWrapper() {
     const { isExploreMode } = useGalaxy();
+    const pathname = usePathname();
+
+    // Do not render the heavy 3D starfield on Individual Movie pages
+    // where we want a dark, solid cinematic backdrop (or custom static image).
+    if (pathname.startsWith('/movie/')) {
+        return null;
+    }
 
     return (
         <div suppressHydrationWarning style={{
