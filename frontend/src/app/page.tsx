@@ -1,11 +1,10 @@
-import GalaxyBackgroundWrapper from '@/components/3d/GalaxyBackgroundWrapper';
+
 import Navbar from '@/components/layout/Navbar';
 import HeroSearch from '@/components/ui/HeroSearch';
 import ScrollHint from '@/components/ui/ScrollHint';
 import { MovieRow } from '@/components/ui/MovieRow';
 import ExploreButton from '@/components/ui/ExploreButton';
-import ExploreHUD from '@/components/ui/ExploreHUD';
-import StarTooltip from '@/components/ui/StarTooltip';
+
 import ExploreFader from '@/components/layout/ExploreFader';
 
 export default function Home() {

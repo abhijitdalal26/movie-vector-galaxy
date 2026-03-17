@@ -116,7 +116,7 @@ export default function HeroSearch() {
 
                 {/* Example prompts */}
                 <p className="mt-3 text-xs text-gray-600 tracking-wide">
-                    Try: <span className="text-gray-500 italic">"dystopian psychological thriller"</span> · <span className="text-gray-500 italic">"feel-good adventure"</span> · <span className="text-gray-500 italic">"mind-bending sci-fi"</span>
+                    Try: <span className="text-gray-500 italic">{'"'}dystopian psychological thriller{'"'}</span> · <span className="text-gray-500 italic">{'"'}feel-good adventure{'"'}</span> · <span className="text-gray-500 italic">{'"'}mind-bending sci-fi{'"'}</span>
                 </p>
             </form>
         </div>

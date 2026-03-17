@@ -1,6 +1,6 @@
 import Navbar from '@/components/layout/Navbar';
 import { api } from '@/lib/api';
-import { Star, ArrowDown, Bookmark, Share2, Link as LinkIcon } from 'lucide-react';
+import { Star, Bookmark, Share2, Link as LinkIcon } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import ViewInGalaxyButton from '@/components/ui/ViewInGalaxyButton';
 import Image from 'next/image';

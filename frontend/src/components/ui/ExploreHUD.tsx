@@ -11,6 +11,7 @@ export default function ExploreHUD() {
 
     useEffect(() => {
         if (isExploreMode) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setShowHint(true);
             const t = setTimeout(() => setShowHint(false), 4500);
             return () => clearTimeout(t);

@@ -1,3 +1,5 @@
+'use client';
+
 import { Movie, api } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';

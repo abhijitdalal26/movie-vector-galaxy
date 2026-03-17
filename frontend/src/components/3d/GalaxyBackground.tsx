@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { OrbitControls } from '@react-three/drei';
-import { useRouter } from 'next/navigation';
+
 import { api, GalaxyStar } from '@/lib/api';
 import { useGalaxy } from '@/context/GalaxyContext';
 
@@ -19,14 +19,7 @@ function getAdaptiveLimit(): number {
 // UMAP coords are in ~[-1, 1]; scale to 3D world units for a spacious galaxy
 const COORD_SCALE = 180;
 
-// ─── Colour palette ────────────────────────────────────────────────────────────
-const PALETTE = [
-    new THREE.Color('#A78BFA'), // Violet  – galaxy core
-    new THREE.Color('#818CF8'), // Indigo  – inner ring
-    new THREE.Color('#60A5FA'), // Blue    – mid-field
-    new THREE.Color('#F8FAFC'), // White   – edge / faint stars
-    new THREE.Color('#67E8F9'), // Cyan    – accent specks
-];
+
 
 // ─── Vertex shader ─────────────────────────────────────────────────────────────
 const vertexShader = /* glsl */ `
@@ -176,6 +169,7 @@ function GalaxyPoints({ stars }: { stars: GalaxyStar[] }) {
     return (
         <points
             ref={pointsRef}
+            // eslint-disable-next-line react-hooks/refs
             geometry={geo.current}
             frustumCulled={false}
             onClick={(e) => {
@@ -281,6 +275,7 @@ function CameraSetup() {
         camera.position.set(0, 45, 110);
         camera.lookAt(0, 0, 0);
         // Starting threshold
+        // eslint-disable-next-line react-hooks/immutability
         raycaster.params.Points = { threshold: 15 };
     }, [camera, raycaster]);
 
@@ -289,6 +284,7 @@ function CameraSetup() {
         if (!isExploreMode) return;
         const dist = camera.position.length();
         const threshold = Math.max(2.5, dist * 0.035);
+        // eslint-disable-next-line react-hooks/immutability
         raycaster.params.Points = { threshold };
     });
 
