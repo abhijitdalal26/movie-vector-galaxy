@@ -77,3 +77,17 @@ df_out = df_out.astype({
 **Problem**: The custom `/api/movies/{id}/trailer` endpoint frequently threw python `ConnectTimeout` exceptions or `403` errors due to ISP blocks, which in turn froze Next.js SSR.
 - **Cause**: The TMDB API (`api.themoviedb.org`) is routinely blocked by regional ISPs (e.g., in India). Because the Next.js `page.tsx` awaited the backend response during SSR, the entire frontend froze for up to 30 seconds.
 **Solution**: Completely removed the TMDB API integration and the `.env` requirements. Refactored the frontend to use a beautiful static `TrailerPlayer` hero component that relies solely on the local dataset's image paths and metadata rather than fetching external iframes.
+
+### 4. Cinematic UI & Tailwind JIT Caching
+**Problem**: During rapid UI development, new Tailwind utility classes (like `md:flex-row` or custom paddings `pt-40`) were completely ignored by the browser, despite the code being correct.
+- **Cause**: Next.js uses Tailwind JIT (Just-In-Time) compilation. Sometimes, when a dev server runs for hours, the watcher fails to pick up newly introduced class patterns that didn't exist in the initial compiled CSS bundle, or it serves a hard-cached chunk.
+**Solution**: 
+- **Immediate Fix**: For hyper-critical layout structures (like global grid gaps or container max-widths), applying React inline `style={{ ... }}` guarantees the layout resolves correctly regardless of Tailwind's compiler state.
+- **Permanent Fix**: Force-killing the `node.exe` process, deleting the `.next` cache directory, and restarting `npm run dev` forces a clean JIT scan of all files, properly generating the missing utility classes.
+
+### 5. Blending Images into Dark UIs (Melt Effect)
+**Pattern**: Hard borders around movie posters in desktop layouts can look cheap and "pasted on". To achieve a premium streaming-app aesthetic, use multiple inset gradients overlaid on the image container to blend its edges into the background color (e.g., `galaxy-900`):
+```tsx
+<div className="absolute inset-0 bg-gradient-to-t from-galaxy-900 via-transparent to-transparent opacity-90 pointer-events-none" />
+<div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-galaxy-900 opacity-90 pointer-events-none" />
+```
